@@ -1,0 +1,113 @@
+{
+  "service": "CrukKeysApi",
+  "provider": {
+    "name": "aws",
+    "runtime": "python2.7",
+    "stage": "v1",
+    "region": "eu-west-1",
+    "environment": {
+      "DYNAMODB_TABLE": "${self:service}-${opt:stage, self:provider.stage}"
+    },
+    "iamRoleStatements": [
+      {
+        "Effect": "Allow",
+        "Action": [
+          "dynamodb:GetItem",
+          "dynamodb:PutItem",
+          "dynamodb:UpdateItem",
+          "dynamodb:Scan",
+          "dynamodb:DeleteItem"
+        ],
+        "Resource": "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.DYNAMODB_TABLE}"
+      }
+    ]
+  },
+  "functions": {
+    "crukkeys_get_site_env_keys": {
+      "handler": "api/crukkeys_get_site_env_keys.lambda_handler",
+      "events": [
+        {
+          "http": {
+            "method": "get",
+            "path": "{site}/{env}/keys",
+            "private": true
+          }
+        }
+      ]
+    },
+    "crukkeys_add_user": {
+      "handler": "api/crukkeys_add_user.lambda_handler",
+      "events": [
+        {
+          "http": {
+            "method": "post",
+            "path": "user/{username}",
+            "private": true
+          }
+        }
+      ]
+    },
+    "crukkeys_update_user": {
+      "handler": "api/crukkeys_update_user.lambda_handler",
+      "events": [
+        {
+          "http": {
+            "method": "patch",
+            "path": "user/{username}",
+            "private": true
+          }
+        }
+      ]
+    },
+    "crukkeys_del_user": {
+      "handler": "api/crukkeys_del_user.lambda_handler",
+      "events": [
+        {
+          "http": {
+            "method": "delete",
+            "path": "user/{username}",
+            "private": true
+          }
+        }
+      ]
+    },
+    "crukkeys_get_user": {
+      "handler": "api/crukkeys_get_user.lambda_handler",
+      "events": [
+        {
+          "http": {
+            "method": "get",
+            "path": "user/{username}",
+            "private": true
+          }
+        }
+      ]
+    }
+  },
+  "resources": {
+    "Resources": {
+      "CrukKeysTable": {
+        "Type": "AWS::DynamoDB::Table",
+        "Properties": {
+          "AttributeDefinitions": [
+            {
+              "AttributeName": "username",
+              "AttributeType": "S"
+            }
+          ],
+          "KeySchema": [
+            {
+              "AttributeName": "username",
+              "KeyType": "HASH"
+            }
+          ],
+          "ProvisionedThroughput": {
+            "ReadCapacityUnits": 1,
+            "WriteCapacityUnits": 1
+          },
+          "TableName": "${self:provider.environment.DYNAMODB_TABLE}"
+        }
+      }
+    }
+  }
+}
